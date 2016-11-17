@@ -36,6 +36,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
         $event->data['Status'] = 'dokuwiki\\plugin\\structstatus\\Status';
     }
 
+
 }
 
 // vim:ts=4:sw=4:et:

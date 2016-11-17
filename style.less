@@ -4,6 +4,7 @@
     white-space: nowrap;
     display: inline-block;
     padding: 0 0.2em;
+    margin: 0 0.2em 0.2em 0;
     font-size: 90%;
 
     svg {
@@ -11,5 +12,28 @@
         height: 14px;
         vertical-align: middle;
         margin-right: 0.2em;
+    }
+}
+
+.dokuwiki div.structstatus-full {
+    @factor: 1.4;
+
+    font-size: (100% * @factor);
+
+    div.struct_status {
+        display: block;
+
+        svg {
+            width: (14px * @factor);
+            height: (14px * @factor);
+        }
+    }
+
+    div.struct_status.disabled {
+        opacity: 0.2;
+    }
+
+    div.struct_status.disabled:hover {
+        opacity: 0.6;
     }
 }

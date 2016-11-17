@@ -3,6 +3,7 @@
 namespace dokuwiki\plugin\structstatus;
 
 use dokuwiki\plugin\struct\meta\QueryBuilder;
+use dokuwiki\plugin\struct\meta\Search;
 use dokuwiki\plugin\struct\types\AbstractBaseType;
 use dokuwiki\plugin\struct\types\Lookup;
 
@@ -28,17 +29,36 @@ class Status extends Lookup {
         list(, $value, $color, $icon) = json_decode($value);
 
         if($mode == 'xhtml') {
-            $class = 'struct_status';
-            if($icon) $class .= ' struct_status_icon_' . hsc($icon);
-            $R->doc .= '<div class="' . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';">';
-            $R->doc .= $this->inlineSVG($icon);
-            $R->doc .= hsc($value);
-            $R->doc .= '</div>';
+            $R->doc .= $this->xhtmlStatus($value, $color, $icon);
         } else {
             $R->cdata($value);
         }
 
         return true;
+    }
+
+    /**
+     * Creates a single status entry
+     *
+     * @param string $label
+     * @param string $color
+     * @param string $icon
+     * @param string $pid the identifier in the linked status lookup table
+     * @param array $classes
+     * @return string
+     */
+    public function xhtmlStatus($label, $color, $icon='', $pid='', $classes=array()) {
+        $html = '';
+        $classes[] = 'struct_status';
+        if($icon) $classes[] = 'struct_status_icon_'.$icon;
+        $class = hsc(join(' ', $classes));
+
+        $html .= '<div class="' . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';" data-pid="'.hsc($pid).'">';
+        $html .= $this->inlineSVG($icon);
+        $html .= hsc($label);
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
@@ -114,5 +134,38 @@ class Status extends Lookup {
 
         // get the values (pid, status, color)
         $QB->addSelectStatement("STRUCT_JSON($tablealias.$colname, $field_status, $field_color, $field_icon)", $alias);
+    }
+
+    /**
+     * Returns a list of available statuses for this type
+     *
+     * This is similar to getOptions but returns some more info about each status
+     *
+     * @return array
+     */
+    public function getAllStatuses() {
+        $col = $this->getLookupColumn();
+        $colname = $col->getLabel();
+
+        $search = new Search();
+        $search->addSchema($col->getTable());
+        $search->addColumn($colname);
+        $search->addColumn('color');
+        $search->addColumn('icon');
+        $search->addSort($colname);
+        $values = $search->execute();
+        $pids = $search->getPids();
+
+        $statuses = array();
+        foreach($values as $status) {
+            $pid = array_shift($pids);
+            $label = $status[0]->getValue();
+            $color = $status[1]->getValue();
+            $icon = $status[2]->getValue();
+
+            $statuses[] = compact('pid', 'label', 'color', 'icon');
+        }
+
+        return $statuses;
     }
 }
