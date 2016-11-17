@@ -19,8 +19,8 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      */
     public function register(Doku_Event_Handler $controller) {
 
-       $controller->register_hook('moo', 'FIXME', $this, 'handle_moo');
-   
+       $controller->register_hook('PLUGIN_STRUCT_TYPECLASS_INIT', 'BEFORE', $this, 'handle_init');
+
     }
 
     /**
@@ -32,7 +32,8 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      * @return void
      */
 
-    public function handle_moo(Doku_Event &$event, $param) {
+    public function handle_init(Doku_Event &$event, $param) {
+        $event->data['Status'] = 'dokuwiki\\plugin\\structstatus\\Status';
     }
 
 }
