@@ -96,7 +96,7 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
 
         // make sure its the correct type
         /** @var  \dokuwiki\plugin\structstatus\Status $type */
-        $type =  $col->getType();
+        $type = $col->getType();
         if(!is_a($type, \dokuwiki\plugin\structstatus\Status::class)) {
             msg(hsc("$table.$field is not a Status field"), -1);
             return '';
@@ -106,14 +106,25 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
         $access = \dokuwiki\plugin\struct\meta\AccessTable::bySchema($schema, $id);
         $pids = (array) $access->getDataColumn($col)->getRawValue();
 
+        // add meta data when writable
+        $args = array(
+            'class' => 'structstatus-full',
+        );
+        if(auth_quickaclcheck($id) >= AUTH_EDIT && $schema->isEditable()) {
+            $args['data-multi'] = (int) $type->isMulti();
+            $args['data-st'] = getSecurityToken();
+            $args['data-field'] = $col->getFullQualifiedLabel();
+            $args['data-page'] = $id;
+            $args['class'] .= ' editable';
+        }
+
         // output
-        $html = '<div class="structstatus-full">';
+        $html = '<div ' . buildAttributes($args) . '>';
         foreach($type->getAllStatuses() as $status) {
+            $color = $status['color'];
             if(in_array($status['pid'], $pids)) {
-                $color = $status['color'];
                 $class = array();
             } else {
-                $color = '#333333';
                 $class = array('disabled');
             }
             $html .= $type->xhtmlStatus($status['label'], $color, $status['icon'], $status['pid'], $class);
