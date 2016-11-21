@@ -26,6 +26,7 @@ jQuery(function () {
                 })
                 .success(function (response) {
                     applyDataSet($self.parent(), set);
+                    jQuery('#plugin__struct_output').find('td[data-struct="'+ $self.parent().data('field') +'"]').html(response);
                 })
                 .done(function () {
                     $self.parent().css('visibility', 'visible');
