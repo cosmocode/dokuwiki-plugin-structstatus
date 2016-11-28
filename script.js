@@ -45,6 +45,9 @@ jQuery(function () {
      */
     function applyDataSet($full, set) {
         $full.find('div.struct_status').each(function () {
+            if(typeof set == 'number') {
+                set = [set];
+            }
             var $self = jQuery(this);
             if (set.indexOf($self.data('pid')) === -1) {
                 $self.addClass('disabled');
