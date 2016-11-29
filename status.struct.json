@@ -1,0 +1,78 @@
+{
+    "structversion": "2016-11-17",
+    "schema": "structstatus",
+    "id": "132",
+    "user": "admin",
+    "columns": [
+        {
+            "colref": 1,
+            "ismulti": false,
+            "isenabled": true,
+            "sort": 10,
+            "label": "icon",
+            "class": "Dropdown",
+            "config": {
+                "visibility": {
+                    "inpage": true,
+                    "ineditor": true
+                },
+                "values": "paperclip, close-circle-outline, checkbox-marked-circle-outline, checkbox-blank-circle-outline",
+                "label": {
+                    "en": "",
+                    "de": ""
+                },
+                "hint": {
+                    "en": "",
+                    "de": ""
+                }
+            }
+        },
+        {
+            "colref": 2,
+            "ismulti": false,
+            "isenabled": true,
+            "sort": 20,
+            "label": "name_en",
+            "class": "Text",
+            "config": {
+                "visibility": {
+                    "inpage": true,
+                    "ineditor": true
+                },
+                "prefix": "",
+                "postfix": "",
+                "label": {
+                    "en": "",
+                    "de": ""
+                },
+                "hint": {
+                    "en": "",
+                    "de": ""
+                }
+            }
+        },
+        {
+            "colref": 3,
+            "ismulti": false,
+            "isenabled": true,
+            "sort": 30,
+            "label": "color",
+            "class": "Color",
+            "config": {
+                "visibility": {
+                    "inpage": true,
+                    "ineditor": true
+                },
+                "default": "#ffffff",
+                "label": {
+                    "en": "",
+                    "de": ""
+                },
+                "hint": {
+                    "en": "",
+                    "de": ""
+                }
+            }
+        }
+    ]
+}
