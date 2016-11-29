@@ -41,7 +41,7 @@ jQuery(function () {
      * Set the statuses accrding to the given set
      *
      * @param {jQuery} $full the wrapper around the statuses
-     * @param {int[]} set the list of statuses to enable
+     * @param {int|int[]} set the status or the list of statuses to enable
      */
     function applyDataSet($full, set) {
         $full.find('div.struct_status').each(function () {
