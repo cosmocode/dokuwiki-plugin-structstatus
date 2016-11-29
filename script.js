@@ -45,7 +45,10 @@ jQuery(function () {
      */
     function applyDataSet($full, set) {
         $full.find('div.struct_status').each(function () {
-            if(typeof set == 'number') {
+            if (typeof set == 'undefined') {
+                set = [];
+            }
+            if (typeof set == 'number') {
                 set = [set];
             }
             var $self = jQuery(this);
