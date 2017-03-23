@@ -45,18 +45,21 @@ class Status extends Lookup {
      * @param string $icon
      * @param string $pid the identifier in the linked status lookup table
      * @param array $classes
+     * @param bool  $button
      * @return string
      */
-    public function xhtmlStatus($label, $color, $icon='', $pid='', $classes=array()) {
+    public function xhtmlStatus($label, $color, $icon='', $pid='', $classes=array(), $button=false) {
         $html = '';
         $classes[] = 'struct_status';
         if($icon) $classes[] = 'struct_status_icon_'.$icon;
         $class = hsc(join(' ', $classes));
 
-        $html .= '<div class="' . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';" data-pid="'.hsc($pid).'">';
+        $tag = $button ? 'button' : 'div';
+
+        $html .= "<$tag class=\"" . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';" data-pid="'.hsc($pid).'">';
         $html .= $this->inlineSVG($icon);
         $html .= hsc($label);
-        $html .= '</div>';
+        $html .= "</$tag>";
 
         return $html;
     }
