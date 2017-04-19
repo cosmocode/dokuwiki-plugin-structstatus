@@ -127,7 +127,7 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
             } else {
                 $class = array('disabled');
             }
-            $html .= $type->xhtmlStatus($status['label'], $color, $status['icon'], $status['pid'], $class);
+            $html .= $type->xhtmlStatus($status['label'], $color, $status['icon'], $status['pid'], $class, true);
         }
         $html .= '</div>';
 

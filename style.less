@@ -1,4 +1,4 @@
-.dokuwiki div.struct_status {
+.dokuwiki .struct_status {
     border: 1px solid @ini_bordercolor;
     border-radius: 3px;
     white-space: nowrap;
@@ -20,8 +20,11 @@
 
     font-size: (100% * @factor);
 
-    div.struct_status {
+    button.struct_status {
         display: block;
+        width: 100%;
+        text-align: left;
+        background: inherit;
 
         svg {
             width: (14px * @factor);
@@ -29,12 +32,12 @@
         }
     }
 
-    div.struct_status.disabled {
+    button.struct_status.disabled {
         filter: grayscale(100%);
         opacity: 0.2;
     }
 
-    div.struct_status.disabled:hover {
+    button.struct_status.disabled:hover {
         opacity: 0.6;
     }
 }

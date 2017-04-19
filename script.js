@@ -2,7 +2,7 @@ jQuery(function () {
     /**
      * Attach the click handler
      */
-    jQuery('.structstatus-full.editable').find('div.struct_status')
+    jQuery('.structstatus-full.editable').find('button.struct_status')
         .click(function () {
             var $self = jQuery(this);
             $self.parent().css('visibility', 'hidden');
@@ -34,7 +34,6 @@ jQuery(function () {
             ;
 
         })
-        .css('cursor', 'pointer')
     ;
 
     /**
@@ -44,7 +43,7 @@ jQuery(function () {
      * @param {int|int[]} set the status or the list of statuses to enable
      */
     function applyDataSet($full, set) {
-        $full.find('div.struct_status').each(function () {
+        $full.find('button.struct_status').each(function () {
             if (typeof set == 'undefined') {
                 set = [];
             }
@@ -71,7 +70,7 @@ jQuery(function () {
         var set = [];
         var wason = false;
 
-        $full.find('div.struct_status').not('.disabled').each(function () {
+        $full.find('button.struct_status').not('.disabled').each(function () {
             var pid = jQuery(this).data('pid');
             if (pid === toggle) {
                 wason = true; // this is the value we're toggling
