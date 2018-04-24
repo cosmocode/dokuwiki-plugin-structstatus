@@ -1,7 +1,7 @@
 base   structstatus
 author Andreas Gohr
 email  dokuwiki@cosmocode.de
-date   2017-04-19
+date   2018-04-24
 name   structstatus plugin
 desc   Display a document status using struct data
 url    https://www.dokuwiki.org/plugin:structstatus
