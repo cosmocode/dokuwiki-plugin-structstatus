@@ -132,7 +132,7 @@ class Status extends Lookup {
         // join the lookup
         $QB->addLeftJoin(
             $tablealias, $schema, $rightalias,
-            "$tablealias.$colname = $rightalias.pid AND $rightalias.latest = 1"
+            "$tablealias.$colname = STRUCT_JSON($rightalias.pid, CAST($rightalias.rid AS DECIMAL)) AND $rightalias.latest = 1"
         );
 
         // get the values (pid, status, color)
