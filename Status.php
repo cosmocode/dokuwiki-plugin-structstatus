@@ -2,6 +2,7 @@
 
 namespace dokuwiki\plugin\structstatus;
 
+use dokuwiki\plugin\struct\meta\Column;
 use dokuwiki\plugin\struct\meta\QueryBuilder;
 use dokuwiki\plugin\struct\meta\Search;
 use dokuwiki\plugin\struct\types\AbstractBaseType;
@@ -43,12 +44,12 @@ class Status extends Lookup {
      * @param string $label
      * @param string $color
      * @param string $icon
-     * @param string $pid the identifier in the linked status lookup table
+     * @param string $rid the identifier in the linked status lookup table
      * @param array $classes
      * @param bool  $button
      * @return string
      */
-    public function xhtmlStatus($label, $color, $icon='', $pid='', $classes=array(), $button=false) {
+    public function xhtmlStatus($label, $color, $icon='', $rid = 0, $classes=array(), $button=false) {
         $html = '';
         $classes[] = 'struct_status';
         if($icon) $classes[] = 'struct_status_icon_'.$icon;
@@ -56,7 +57,7 @@ class Status extends Lookup {
 
         $tag = $button ? 'button' : 'div';
 
-        $html .= "<$tag class=\"" . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';" data-pid="'.hsc($pid).'">';
+        $html .= "<$tag class=\"" . $class . '" style="border-color:' . hsc($color) . '; fill: ' . hsc($color) . ';" data-rid="'.hsc($rid).'">';
         $html .= $this->inlineSVG($icon);
         $html .= hsc($label);
         $html .= "</$tag>";
@@ -157,16 +158,16 @@ class Status extends Lookup {
         $search->addColumn('icon');
         $search->addSort($colname);
         $values = $search->execute();
-        $pids = $search->getPids();
+        $rids = $search->getRids();
 
         $statuses = array();
         foreach($values as $status) {
-            $pid = array_shift($pids);
+            $rid = json_encode(["", (int)array_shift($rids)]);
             $label = $status[0]->getValue();
             $color = $status[1]->getValue();
             $icon = $status[2]->getValue();
 
-            $statuses[] = compact('pid', 'label', 'color', 'icon');
+            $statuses[] = compact('rid', 'label', 'color', 'icon');
         }
 
         return $statuses;
