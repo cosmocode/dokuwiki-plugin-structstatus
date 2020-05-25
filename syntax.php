@@ -71,6 +71,11 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
         return true;
     }
 
+    /**
+     * @param string $table
+     * @param string $field
+     * @return string
+     */
     public function tpl($table, $field) {
         global $INFO;
         $id = $INFO['id'];
@@ -87,7 +92,8 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
         if(!in_array($table, $assignments->getPageAssignments($id))) return '';
 
         // check if schema exists
-        $schema = new \dokuwiki\plugin\struct\meta\Schema($table);
+        $access = \dokuwiki\plugin\struct\meta\AccessTable::getPageAccess($table, $id);
+        $schema = $access->getSchema();
         if(!$schema->getId()) return '';
 
         // get the column
@@ -103,8 +109,7 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
         }
 
         // get current value
-        $access = \dokuwiki\plugin\struct\meta\AccessTable::bySchema($schema, $id);
-        $pids = (array) $access->getDataColumn($col)->getRawValue();
+        $rids = (array) $access->getDataColumn($col)->getRawValue();
 
         // add meta data when writable
         $args = array(
@@ -115,6 +120,8 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
             $args['data-st'] = getSecurityToken();
             $args['data-field'] = $col->getFullQualifiedLabel();
             $args['data-page'] = $id;
+            $args['data-rev'] = time();
+            $args['data-rid'] = implode(',', $rids); // FIXME this is wrong for multi fields in the widget?
             $args['class'] .= ' editable';
         }
 
@@ -122,12 +129,12 @@ class syntax_plugin_structstatus extends DokuWiki_Syntax_Plugin {
         $html = '<div ' . buildAttributes($args) . '>';
         foreach($type->getAllStatuses() as $status) {
             $color = $status['color'];
-            if(in_array($status['pid'], $pids)) {
+            if(in_array($status['rid'], $rids)) {
                 $class = array();
             } else {
                 $class = array('disabled');
             }
-            $html .= $type->xhtmlStatus($status['label'], $color, $status['icon'], $status['pid'], $class, true);
+            $html .= $type->xhtmlStatus($status['label'], $color, $status['icon'], $status['rid'], $class, true);
         }
         $html .= '</div>';
 
