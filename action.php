@@ -34,9 +34,12 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      * Call our custom migrations when defined
      *
      * @param Doku_Event $event
+     * @return bool
      */
     public function handleMigrations(Doku_Event $event)
     {
+        $ok = true;
+
         /** @var \helper_plugin_struct_db $helper */
         $helper = plugin_load('helper', 'struct_db');
         $sqlite = $helper->getDB();
@@ -51,11 +54,14 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
             $schemas = $sqlite->res2arr($res);
 
             $sqlite->query('BEGIN TRANSACTION');
-            $ok = true;
 
-            // TODO determine which migrations should be executed
-            foreach ($schemas as $schema) {
-                $ok = $ok && $this->migration17($sqlite, $schema);
+            foreach ($this->pendingMigrations($dbVersionStruct, $dbVersionStructStatus) as $migration) {
+                $call = 'migration' . $migration;
+                if (is_callable([$this, "$call"])) {
+                    foreach ($schemas as $schema) {
+                        $ok = $ok && $this->$call($sqlite, $schema);
+                    }
+                }
             }
 
             // save migration status
@@ -69,6 +75,21 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
             $sqlite->query('COMMIT TRANSACTION');
             return true;
         }
+
+        return $ok;
+    }
+
+    /**
+     * Detect which migrations should be executed. Start conservatively with version 1.
+     *
+     * @param int $dbVersionStruct Current version of struct DB as found in 'opts' table
+     * @param int|null $dbVersionStructStatus Current version in 'opts', may not exist yet
+     * @return int[]
+     */
+    protected function pendingMigrations($dbVersionStruct, $dbVersionStructStatus)
+    {
+        $pluginDbVersion = $dbVersionStructStatus ?: 1;
+        return range($pluginDbVersion, $dbVersionStruct);
     }
 
     /**
