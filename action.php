@@ -44,38 +44,46 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
         $helper = plugin_load('helper', 'struct_db');
         $sqlite = $helper->getDB();
 
-        // check if we have migrations to do
+        // check whether we are already up-to-date
         list($dbVersionStruct, $dbVersionStructStatus) = $this->getDbVersions($sqlite);
-        if (!isset($dbVersionStructStatus) || $dbVersionStructStatus < $dbVersionStruct) {
-            $sql = "SELECT MAX(id) AS id, tbl FROM schemas
-                    GROUP BY tbl
-            ";
-            $res = $sqlite->query($sql);
-            $schemas = $sqlite->res2arr($res);
-
-            $sqlite->query('BEGIN TRANSACTION');
-
-            foreach ($this->pendingMigrations($dbVersionStruct, $dbVersionStructStatus) as $migration) {
-                $call = 'migration' . $migration;
-                if (is_callable([$this, "$call"])) {
-                    foreach ($schemas as $schema) {
-                        $ok = $ok && $this->$call($sqlite, $schema);
-                    }
-                }
-            }
-
-            // save migration status
-            $s = 'INSERT INTO opts(opt,val) VALUES ("dbversion_structstatus", ' . $dbVersionStruct . ')';
-            $ok = $ok && $sqlite->query($s);
-
-            if (!$ok) {
-                $sqlite->query('ROLLBACK TRANSACTION');
-                return false;
-            }
-            $sqlite->query('COMMIT TRANSACTION');
-            return true;
+        if (isset($dbVersionStructStatus) && $dbVersionStructStatus === $dbVersionStruct) {
+            return $ok;
         }
 
+        // check whether we have any pending migrations for the current version of struct db
+        $pending = array_filter(array_map(function ($version) use ($dbVersionStruct) {
+            return $version >= $dbVersionStruct &&
+                is_callable([$this, "migration$version"]) ? $version : null;
+        }, $this->diffVersions($dbVersionStruct, $dbVersionStructStatus)));
+        if (empty($pending)) {
+            return $ok;
+        }
+
+        // execute the migrations
+        $sql = "SELECT MAX(id) AS id, tbl FROM schemas
+            GROUP BY tbl
+        ";
+        $res = $sqlite->query($sql);
+        $schemas = $sqlite->res2arr($res);
+
+        $sqlite->query('BEGIN TRANSACTION');
+
+        foreach ($pending as $version) {
+            $call = 'migration' . $version;
+            foreach ($schemas as $schema) {
+                $ok = $ok && $this->$call($sqlite, $schema);
+            }
+        }
+
+        // update migration status in struct database
+        $sql = 'REPLACE INTO opts(opt,val) VALUES ("dbversion_structstatus", ' . $version . ')';
+        $ok = $ok && $sqlite->query($sql);
+
+        if ($ok) {
+            $sqlite->query('COMMIT TRANSACTION');
+        } else {
+            $sqlite->query('ROLLBACK TRANSACTION');
+        }
         return $ok;
     }
 
@@ -86,7 +94,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      * @param int|null $dbVersionStructStatus Current version in 'opts', may not exist yet
      * @return int[]
      */
-    protected function pendingMigrations($dbVersionStruct, $dbVersionStructStatus)
+    protected function diffVersions($dbVersionStruct, $dbVersionStructStatus)
     {
         $pluginDbVersion = $dbVersionStructStatus ?: 1;
         return range($pluginDbVersion, $dbVersionStruct);
