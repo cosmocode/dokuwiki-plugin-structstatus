@@ -23,15 +23,16 @@ jQuery(function () {
                 DOKU_BASE + 'lib/exe/ajax.php',
                 data
             )
-                .error(function (jqXHR) {
+                .fail(function (jqXHR) {
+                    console.log('error');
                     alert(jqXHR.responseText);
                 })
-                .success(function (response) {
+                .done(function (response) {
                     const value = JSON.parse(response).value;
                     applyDataSet($self.parent(), set);
                     jQuery('#plugin__struct_output').find('td[data-struct="' + $self.parent().data('field') + '"]').html(value);
                 })
-                .done(function () {
+                .always(function () {
                     $self.parent().css('visibility', 'visible');
                 })
             ;
