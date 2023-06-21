@@ -1,11 +1,13 @@
 <?php
+
+use dokuwiki\plugin\sqlite\SQLiteDB;
+
 /**
  * DokuWiki Plugin structstatus (Action Component)
  *
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author  Andreas Gohr <dokuwiki@cosmocode.de>
  */
-
 class action_plugin_structstatus extends DokuWiki_Action_Plugin {
 
     /**
@@ -38,8 +40,6 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      */
     public function handleMigrations(Doku_Event $event)
     {
-        $ok = true;
-
         /** @var \helper_plugin_struct_db $helper */
         $helper = plugin_load('helper', 'struct_db');
         $sqlite = $helper->getDB();
@@ -47,7 +47,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
         // check whether we are already up-to-date
         list($dbVersionStruct, $dbVersionStructStatus) = $this->getDbVersions($sqlite);
         if (isset($dbVersionStructStatus) && $dbVersionStructStatus === $dbVersionStruct) {
-            return $ok;
+            return true;
         }
 
         // check whether we have any pending migrations for the current version of struct db
@@ -56,35 +56,34 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
                 is_callable([$this, "migration$version"]) ? $version : null;
         }, $this->diffVersions($dbVersionStruct, $dbVersionStructStatus)));
         if (empty($pending)) {
-            return $ok;
+            return true;
         }
 
         // execute the migrations
-        $sql = "SELECT MAX(id) AS id, tbl FROM schemas
-            GROUP BY tbl
-        ";
-        $res = $sqlite->query($sql);
-        $schemas = $sqlite->res2arr($res);
+        $sql = "SELECT MAX(id) AS id, tbl FROM schemas GROUP BY tbl";
+        $schemas= $sqlite->queryAll($sql);
 
-        $sqlite->query('BEGIN TRANSACTION');
+        $sqlite->getPdo()->beginTransaction();
+        try {
 
-        foreach ($pending as $version) {
-            $call = 'migration' . $version;
-            foreach ($schemas as $schema) {
-                $ok = $ok && $this->$call($sqlite, $schema);
+            foreach ($pending as $version) {
+                $call = 'migration' . $version;
+                foreach ($schemas as $schema) {
+                    $this->$call($sqlite, $schema);
+                }
             }
+
+            // update migration status in struct database
+            $sql = 'REPLACE INTO opts(opt,val) VALUES ("dbversion_structstatus", ' . $version . ')';
+            $sqlite->query($sql);
+
+            $sqlite->getPdo()->commit();
+        } catch (Exception $e) {
+            $sqlite->getPdo()->rollBack();
+            return false;
         }
 
-        // update migration status in struct database
-        $sql = 'REPLACE INTO opts(opt,val) VALUES ("dbversion_structstatus", ' . $version . ')';
-        $ok = $ok && $sqlite->query($sql);
-
-        if ($ok) {
-            $sqlite->query('COMMIT TRANSACTION');
-        } else {
-            $sqlite->query('ROLLBACK TRANSACTION');
-        }
-        return $ok;
+        return true;
     }
 
     /**
@@ -104,7 +103,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
      * Converts integer ids used in struct before dbversion 17
      * to composite ids ["",int]
      *
-     * @param helper_plugin_sqlite $sqlite
+     * @param SQLiteDB $sqlite
      * @param array $schema
      * @return bool
      */
@@ -114,8 +113,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
         $sid = $schema['id'];
 
         $s = $this->getLookupColsSql($sid);
-        $res = $sqlite->query($s);
-        $cols = $sqlite->res2arr($res);
+        $cols = $sqlite->queryAll($s);
 
         if ($cols) {
             foreach ($cols as $col) {
@@ -134,7 +132,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
     }
 
     /**
-     * @param $sqlite
+     * @param SQLiteDB $sqlite
      * @return array
      */
     protected function getDbVersions($sqlite)
@@ -143,8 +141,7 @@ class action_plugin_structstatus extends DokuWiki_Action_Plugin {
         $dbVersionStructStatus = null;
 
         $sql = 'SELECT opt, val FROM opts WHERE opt=? OR opt=?';
-        $res = $sqlite->query($sql, 'dbversion', 'dbversion_structstatus');
-        $vals = $sqlite->res2arr($res);
+        $vals = $sqlite->queryAll($sql, ['dbversion', 'dbversion_structstatus']);
 
         foreach ($vals as $val) {
             if ($val['opt'] === 'dbversion') {
